@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Compressed LLM Investor Embeddings</title>
+<style>
+  @page { size: A4; margin: 13mm 15mm 13mm 15mm; }
+  body { font-family: "Times New Roman", Times, serif; font-size: 10pt; line-height: 1.27; color: #000; margin: 0; }
+  h1 { font-size: 14.5pt; text-align: center; margin: 0 0 4px 0; line-height: 1.2; }
+  .authors { text-align: center; font-size: 9.6pt; margin-bottom: 2px; }
+  .assign { text-align: center; font-size: 9pt; font-style: italic; margin-bottom: 7px; }
+  h2 { break-after: avoid; font-size: 11pt; margin: 8px 0 3px 0; font-variant: small-caps; }
+  h3 { break-after: avoid; font-size: 10pt; margin: 5px 0 2px 0; font-style: italic; font-weight: bold; }
+  p { margin: 0 0 4px 0; text-align: justify; }
+  .abstract { font-size: 9.5pt; }
+  table { border-collapse: collapse; width: 100%; font-size: 8.4pt; line-height: 1.18; margin: 3px 0 4px 0; }
+  th, td { border: 0.6px solid #555; padding: 1.5px 4px; vertical-align: top; text-align: left; }
+  td.n, th.n { text-align: right; }
+  th { background: #eee; }
+  tr { page-break-inside: avoid; }
+  tr.grp td { background: #f6f6f6; font-style: italic; }
+  tr.best td { font-weight: bold; }
+  .cap { font-size: 8.5pt; text-align: center; margin: 1px 0 4px 0; font-variant: small-caps; }
+  ul, ol { margin: 0 0 4px 0; padding-left: 18px; }
+  li { margin: 0 0 1px 0; text-align: justify; }
+  .rq { border: 0.8px solid #000; padding: 3px 6px; margin: 3px 0; background: #fafafa; }
+  .refs p { font-size: 8.7pt; text-align: left; padding-left: 20px; text-indent: -20px; margin-bottom: 2px; }
+  .tag { font-size: 8pt; font-weight: bold; }
+  code { font-family: "Courier New", monospace; font-size: 8.5pt; }
+</style>
+</head>
+<body>
+
+<h1>Compressing Frozen-LLM Investor Embeddings with UMAP and PCA:<br>A Learned-Reranker Implementation on the FAR-Trans Starter Protocol</h1>
+<div class="authors"><b>Anastasia Shavrina</b> (Анастасия Шаврина) · aoshavrina@edu.hse.ru · Team <b>DimSum</b> (with Анна Шрейбер)<br>Team repository: https://github.com/shavrinaanastasia/DimSum · experiment commit: <code>COMMIT_HASH</code> (code in <code>hw2/</code>)</div>
+<div class="assign">LLM4Rec, HSE University — Homework 2 (Implement and Test Your Idea), individual report · 15 November 2026</div>
+
+<p class="abstract"><b><i>Abstract</i></b>—I implemented the encoder-side change from my Session 1 question. A frozen open-weight LLM (Qwen3.5-0.8B) turns each investor's as-of profile and purchase history into a 1024-d vector. The vector is compressed with UMAP (main) or PCA (side) to 128, 32, 8 or 2 dimensions, and the 50 nearest investors in that space give every asset a neighbour score. I tested the score in two ways: alone (stage A), and as a feature of a LightGBM LambdaRank reranker trained on three earlier one-month windows (stage B, my main method). Everything runs inside the provided starter (same 100 users, cut-off 2021-06-01, 30-day window, repeats allowed) next to the four provided baselines, and again on the starter's full warm cohort (10,404 users). <b>Against the baselines:</b> all nine stage-B variants beat all four baselines. On the 100 users they score 0.0356–0.0390 against at most 0.0286 for Popularity (all users). On the full cohort, the best variant, UMAP-32, reaches 0.0543 / 0.4798 (all / nonempty) against 0.0526 / 0.4648 for Latest buy, the strongest baseline. Paired difference on nonempty users: +0.0149, 95% CI [+0.0045, +0.0254]. <b>For my question:</b> on its own, UMAP keeps nDCG@10 almost flat from 128 to 2 dimensions, while PCA collapses below 32. Inside the reranker, every compressed variant except PCA-8 is non-inferior to the 1024-d embedding. However, the reranker without any LLM feature scores the same (0.4782), so the gain over the baselines comes from the learned reranker, not from the LLM.</p>
+
+<h2>1. Introduction</h2>
+<p><b>Question carried over from Session 1.</b> How much of an LLM-derived investor representation does a Top-10 financial recommender need? In HW1 I proposed to compress one frozen LLM embedding to <i>d</i> ∈ {128, 32, 8, 2} and keep text, encoder, ranker, candidates and metric fixed. <b>Changes since HW1, all following instructor feedback or the starter.</b> (i) The encoder is Qwen3.5-0.8B (instructor request) instead of Qwen3-Embedding-0.6B. (ii) UMAP [6] is the main reducer and PCA a side experiment (instructor request). (iii) The representation is judged against the classical baselines, so I place it in a learned ranker as well as testing it alone. (iv) This homework uses the starter's teaching protocol (cut-off 2021-06-01, 30 days, 100 deterministic warm users). (v) Asset names are now included in the text (see §5, contamination).</p>
+<div class="rq"><b>RQ (HW2 form).</b> For FAR-Trans investors with purchase history [<b>population</b>], does replacing the 1024-d frozen Qwen3.5 investor embedding by its UMAP or PCA projection to <i>d</i> ∈ {128, 32, 8, 2} [<b>change</b>] preserve nDCG@10 against assets bought in the 30-day window [<b>outcome</b>]? The comparison is with the uncompressed embedding in the same recommender (kNN alone, or as a reranker feature), with the four provided baselines, and with the same recommender without the LLM [<b>comparators</b>].</div>
+
+<h2>2. Related Work</h2>
+<p>FAR-Trans [1] provides the data and the nDCG@10-on-future-purchases metric; its benchmark has no LLM component. The course package adapts LLM-Rec [2] (LLM paraphrases of asset text, TF-IDF) and LLMRank [3] (LLM re-ranking of fixed candidates); both use the LLM on the <i>item</i> side or as a ranker, while my change is a dense <i>user</i> representation and its size. To get a sentence vector from a generative LLM I use PromptEOL [4], which asks the model to summarise the input "in one word" and takes the last token's hidden state. Such vectors are known to be anisotropic, i.e. concentrated in a narrow cone [5]: the mean pairwise cosine between my stored user vectors is about 0.94. UMAP [6] builds a neighbour graph and preserves local structure, while PCA keeps the directions of largest global variance. LambdaMART-style gradient-boosted rankers [9] are the standard way to combine such a score with classical signals.</p>
+
+<h2>3. Method</h2>
+<h3>3.1 Representation and where it plugs in</h3>
+<p>The starter's <code>encode()</code> seam can only re-weight a user's own past assets, so it cannot express "similar investors bought X". As the assignment allows for text embeddings, I wrote two scripts in <code>hw2/far-trans-llm/</code>, modelled on the provided <code>encoder.py</code>: <code>embedding_encoder.py</code> (stage A) and <code>reranker_encoder.py</code> (stage B). Both call the provided <code>data_adapter.load</code> (the starter's users, cut-off, eligible assets, truth and popularity) and <code>save_results</code> (the starter's validation, nDCG@10 and aggregation). The four provided baselines are therefore computed by unchanged code in the same run.</p>
+<ol>
+<li><b>Text (pre-cut-off only).</b> For every customer with a Buy before the cut-off, the text has their profile (customer type, risk level and capacity, tagged observed/estimated), counts of buys and sells, and category mix. It also lists the 12 most-weighted bought assets, each with name, category, sub-category, sector, industry and days since last buy (<code>src/embed.py</code>). Example (verbatim start): <i>"Customer type Mass; risk level Conservative (estimated); investment capacity Predicted_CAP_80K_300K. 2 buys and 0 sells of 2 assets; last buy 4 days ago. Category mix: MTF 100%. …"</i></li>
+<li><b>Encoder (LLM call).</b> Frozen <code>Qwen/Qwen3.5-0.8B</code> [7], local snapshot revision <code>2fc0636…8b17</code>. Zero-shot prompt <code>This investor record:\n"{text}"\nmeans in one word:"</code>, left padding, max 384 tokens; the last-token hidden state gives a 1024-d vector. There is no fine-tuning and no generation, so no output can be invalid. The encoding ran on a Colab T4 in fp16 (transformers ≥ 5.2 with flash-linear-attention, batch 64; <code>notebooks/encode_qwen35_colab.ipynb</code>). Vectors were stored as int8 with a per-vector scale (cosine to fp16 ≥ 0.9996). The test matrix (cut-off 2021-06-01) has 25,126 users; the training matrix (cut-off 2021-03-01) is built the same way.</li>
+<li><b>Compression (the studied change).</b> UMAP (<code>n_neighbors</code> 30, <code>min_dist</code> 0, cosine, seed 42) or PCA (on L2-normalised vectors, seed 42), fit on all users of that cut-off; no labels are used.</li>
+<li><b>Neighbour score.</b> For user <i>u</i>, the <i>k</i> = 50 nearest other users vote: score(<i>i</i>) = Σ<sub><i>v</i></sub> sim(<i>u</i>,<i>v</i>) · Σ<sub>buys of <i>i</i> by <i>v</i></sub> 0.5<sup>age/365</sup>. Similarity is cosine for the full and PCA spaces, and 1/(1+Euclidean) for UMAP.</li>
+</ol>
+<h3>3.2 Stage A (score alone) and stage B (learned reranker, main method)</h3>
+<p><b>Stage A</b> ranks all 767 eligible assets by the neighbour score (repeats allowed; ties broken by starter popularity, then ISIN). It has no candidate list. <b>Stage B</b> uses the score inside a reranker, which is the team pipeline in <code>src/</code> adapted to the starter.</p>
+<ul>
+<li><i>Candidates</i> (fixed for all stage-B variants): the union of each user's own past buys and the top 50 assets from five sources. These are user-kNN on purchase vectors, item-kNN, EASE, implicit ALS, and 90-day popularity. They are then filtered to the starter's eligible set, about 110 per user, covering 93% of the full cohort's future purchases.</li>
+<li><i>Features</i> (45): repeat-purchase signals (counts, decayed counts, recency, holdings), popularity and trend, price returns and volatility, attribute (CBF) similarity, item-kNN/EASE/iALS scores and ranks, and investor risk fit. Each LLM variant adds exactly two features, the neighbour score and its rank. The control <code>reranker_behaviour</code> is the same model without them.</li>
+<li><i>Training without leakage.</i> The training windows are 2021-03, 2021-04 and 2021-05, with labels taken from users with purchases in each month; May is the early-stopping validation split. Every training label is dated before the test cut-off. Training windows use the embeddings encoded at 2021-03-01, which never postdate their own cut-off; users without a vector there get a missing value. The test uses the 2021-06-01 embeddings.</li>
+<li><i>Model.</i> LightGBM LambdaRank (learning rate 0.03, 31 leaves, early stopping on validation nDCG@10), then a refit on all three windows, averaged over 3 seeds. These settings were carried over from the team pipeline and not tuned on this test.</li>
+<li><i>Output.</i> Top 10 by score. If a user had fewer than ten candidates, the list would be padded with starter popularity; this was never needed.</li>
+</ul>
+<p><b>Invalid outputs.</b> None are possible, because the LLM emits vectors, not text. Every user received ten valid IDs, as checked by the starter's <code>validate_ranking</code>. No evaluated user lacked an eligible pre-cut-off buy.</p>
+
+<h2>4. Experiments</h2>
+<h3>4.1 Setup</h3>
+<p>Starter defaults: 100 deterministic warm users (SHA-256 seed 42), cut-off 2021-06-01 exclusive, labels = eligible Buys in [2021-06-01, 2021-07-01), repeats allowed, empty truth scores 0 and is kept. <code>protocol_hash</code> 50efd4aeb415… (full value in <code>protocol.json</code>, identical in all runs). Starter: <code>dryjins/RecSys-LLMs</code> commit f6850861 [8], <code>project/far-trans</code> and <code>project/far-trans-llm</code>, unmodified; its 58 unit tests pass. Software: Python 3.11, torch 2.15 (CPU) locally, transformers 5.22, umap-learn 0.6.0, scikit-learn 1.9.1, LightGBM. Hardware: encoding on a Colab T4; everything else on an 8-core laptop CPU. Stage-B runs used <code>PYTHONHASHSEED=0</code> (see §4.4 c).</p>
+
+<h3>4.2 Results on the 100-user starter cohort</h3>
+<table>
+<thead><tr><th>Method</th><th class="n">Users</th><th class="n">Users w/ future purchases</th><th class="n">nDCG@10 all users</th><th class="n">nDCG@10 nonempty truth</th><th class="n">Runtime (s)</th><th class="n">Failed cases</th></tr></thead>
+<tr class="grp"><td colspan="7">Provided baselines (unchanged starter code)</td></tr>
+<tr><td>Popularity</td><td class="n">100</td><td class="n">11</td><td class="n">0.0286</td><td class="n">0.2599</td><td class="n" rowspan="4">18.3<br>(whole starter run, all four)</td><td class="n">0</td></tr>
+<tr><td>CBF</td><td class="n">100</td><td class="n">11</td><td class="n">0.0201</td><td class="n">0.1827</td><td class="n">0</td></tr>
+<tr><td>Latest buy</td><td class="n">100</td><td class="n">11</td><td class="n">0.0277</td><td class="n">0.2520</td><td class="n">0</td></tr>
+<tr><td>Latest buy or sell</td><td class="n">100</td><td class="n">11</td><td class="n">0.0271</td><td class="n">0.2464</td><td class="n">0</td></tr>
+<tr class="grp"><td colspan="7">My method, stage B: reranker + LLM neighbour feature (runtime = training + prediction per variant; shared feature building listed below)</td></tr>
+<tr><td>Reranker + LLM, uncompressed</td><td class="n">100</td><td class="n">11</td><td class="n">0.0384</td><td class="n">0.3487</td><td class="n">41</td><td class="n">0</td></tr>
+<tr><td>Reranker + LLM-UMAP 128 / 32</td><td class="n">100</td><td class="n">11</td><td class="n">0.0356 / 0.0386</td><td class="n">0.3239 / 0.3506</td><td class="n">28 / 53</td><td class="n">0</td></tr>
+<tr><td>Reranker + LLM-UMAP 8 / 2</td><td class="n">100</td><td class="n">11</td><td class="n">0.0365 / 0.0389</td><td class="n">0.3319 / 0.3538</td><td class="n">29 / 37</td><td class="n">0</td></tr>
+<tr><td>Reranker + LLM-PCA 128 / 32 (side)</td><td class="n">100</td><td class="n">11</td><td class="n">0.0386 / 0.0384</td><td class="n">0.3507 / 0.3487</td><td class="n">44 / 33</td><td class="n">0</td></tr>
+<tr><td>Reranker + LLM-PCA 8 / 2 (side)</td><td class="n">100</td><td class="n">11</td><td class="n">0.0359 / 0.0390</td><td class="n">0.3263 / 0.3544</td><td class="n">23 / 51</td><td class="n">0</td></tr>
+<tr><td>Control: same reranker, no LLM feature</td><td class="n">100</td><td class="n">11</td><td class="n">0.0389</td><td class="n">0.3533</td><td class="n">33</td><td class="n">0</td></tr>
+<tr class="grp"><td colspan="7">Stage A: LLM neighbour score alone (runtime = reduction + kNN scoring)</td></tr>
+<tr><td>LLM, uncompressed (1024-d)</td><td class="n">100</td><td class="n">11</td><td class="n">0.0301</td><td class="n">0.2734</td><td class="n">1.8</td><td class="n">0</td></tr>
+<tr><td>LLM-UMAP 128 / 32 / 8 / 2</td><td class="n">100</td><td class="n">11</td><td class="n">0.0300 / 0.0310 / 0.0276 / 0.0304</td><td class="n">0.2727 / 0.2816 / 0.2512 / 0.2760</td><td class="n">451 / 108 / 96 / 164</td><td class="n">0</td></tr>
+<tr><td>LLM-PCA 128 / 32 / 8 / 2 (side)</td><td class="n">100</td><td class="n">11</td><td class="n">0.0301 / 0.0280 / 0.0239 / 0.0216</td><td class="n">0.2734 / 0.2544 / 0.2168 / 0.1964</td><td class="n">1.5 / 0.9 / 0.7 / 0.7</td><td class="n">0</td></tr>
+<tr><td>Control: purchase-vector kNN (no LLM)</td><td class="n">100</td><td class="n">11</td><td class="n">0.0400</td><td class="n">0.3638</td><td class="n">1.2</td><td class="n">0</td></tr>
+</table>
+<div class="cap">Table 1. Starter cohort. Primary metric: all-user mean (empty truth = 0). Whole stage-B run 2,039 s; whole stage-A run 845 s (CPU).</div>
+<p><b>Runtime note.</b> In stage B, building candidates and features for the four windows took 1,645 s, shared by all ten variants. Most of that is fitting the 16 UMAP/PCA reductions (8 per embedding matrix), which are then cached. Embedding inference is not in these times: it was a one-off Colab T4 job of 78 min for 81,685 texts over five cut-offs. <b>Reading Table 1.</b> Every stage-B variant (0.0356–0.0390) is above every provided baseline (≤ 0.0286). For UMAP-32, the paired 95% CI against Latest buy is +0.0108 [+0.0019, +0.0230], and against CBF +0.0185 [+0.0036, +0.0373]. Against Popularity the gain is +0.0100, but its CI [−0.0097, +0.0304] includes 0, because there are only 11 labelled users. For the same reason, the ±0.003 differences between dimensions are noise, so the dimension question is answered on the full cohort.</p>
+
+<h3>4.3 Full warm cohort (same protocol, <code>--max-users 100000</code>)</h3>
+<table>
+<thead><tr><th>Variant (10,404 users; 1,178 with purchases)</th><th class="n">all</th><th class="n">nonempty</th><th class="n">Δ vs 1024-d, nonempty (one-sided LB)</th><th>non-inferior at −0.01?</th></tr></thead>
+<tr><td>Popularity / CBF / Latest buy / Latest buy or sell</td><td class="n">0.0262 / 0.0286 / 0.0526 / 0.0509</td><td class="n">0.2312 / 0.2528 / 0.4648 / 0.4496</td><td class="n">—</td><td>—</td></tr>
+<tr class="grp"><td colspan="5">Stage B (reranker + LLM feature); reference = reranker + 1024-d LLM: 0.0541 / 0.4778</td></tr>
+<tr><td>UMAP 128 / 32 / 8 / 2</td><td class="n">0.0540 / <b>0.0543</b> / 0.0540 / 0.0542</td><td class="n">0.4771 / <b>0.4798</b> / 0.4771 / 0.4790</td><td class="n">−.001 (−.004) / +.002 (−.001) / −.001 (−.004) / +.001 (−.002)</td><td>yes / yes / yes / yes</td></tr>
+<tr><td>PCA 128 / 32 / 8 / 2</td><td class="n">0.0542 / 0.0539 / 0.0533 / 0.0540</td><td class="n">0.4783 / 0.4760 / 0.4705 / 0.4768</td><td class="n">+.001 (−.003) / −.002 (−.005) / −.007 (−.012) / −.001 (−.005)</td><td>yes / yes / <b>no</b> / yes</td></tr>
+<tr><td>Control: same reranker, no LLM feature</td><td class="n">0.0541</td><td class="n">0.4782</td><td class="n">+.000 (−.003)</td><td>—</td></tr>
+<tr class="grp"><td colspan="5">Stage A (score alone); reference = 1024-d LLM kNN: 0.0386 / 0.3410</td></tr>
+<tr><td>UMAP 128 / 32 / 8 / 2</td><td class="n">0.0375 / 0.0374 / 0.0376 / 0.0371</td><td class="n">0.3309 / 0.3304 / 0.3324 / 0.3280</td><td class="n">−.010 (−.018) / −.011 (−.018) / −.009 (−.016) / −.013 (−.021)</td><td>no / no / no / no</td></tr>
+<tr><td>PCA 128 / 32 / 8 / 2</td><td class="n">0.0384 / 0.0374 / 0.0349 / 0.0281</td><td class="n">0.3394 / 0.3304 / 0.3079 / 0.2480</td><td class="n">−.002 (−.006) / −.011 (−.018) / −.033 (−.044) / −.093 (−.111)</td><td>yes / no / no / no</td></tr>
+<tr><td>Control: purchase-vector kNN (no LLM)</td><td class="n">0.0461</td><td class="n">0.4069</td><td class="n">+.066 (+.051)</td><td>—</td></tr>
+</table>
+<div class="cap">Table 2. Full warm cohort; paired per-user differences on the 1,178 nonempty users, 10,000 bootstrap samples, one-sided level 1 − 0.05/4 (rule fixed in HW1). Failed cases: 0 everywhere. Baselines from the stage-B run.</div>
+<p><b>Against the baselines.</b> The reranker with UMAP-32 beats Latest buy, the strongest provided baseline, by +0.0149 nonempty (95% CI [+0.0045, +0.0254]) and +0.0017 on all users ([+0.0005, +0.0029]). It beats Latest buy or sell by +0.0301 [+0.0191, +0.0412], and Popularity and CBF by more than +0.22. The 1024-d LLM variant and the no-LLM control also beat Latest buy significantly (+0.013, CI lower bound ≥ +0.002). PCA-8 is the only stage-B variant whose gain over Latest buy is not significant (+0.0056 [−0.0050, +0.0164]). <b>For the dimension question</b> the two stages agree on the shape. <i>Alone</i>, UMAP is flat (128 vs 2 dimensions differ by 0.003, but all pay about 0.01 against the raw vectors), while PCA falls steeply below 32 dimensions. At 2 dimensions UMAP keeps 96% of the score and PCA 73%. <i>Inside the reranker</i>, compression is almost free: every UMAP size and PCA 128/32/2 is non-inferior, and only PCA-8 fails. The reranker's own features absorb most of the difference.</p>
+
+<h3>4.4 Verification</h3>
+<p><b>My personal check (one user, by hand).</b> I picked user D63DFAE7… under <code>llm_uknn_umap32</code> in the 100-user stage-A run. I recomputed their future purchases directly from <code>transactions.csv</code> with my own pandas filter (Buy, dated 2021-06-01 ≤ <i>t</i> &lt; 2021-07-01, positive transaction ID, eligible ISIN), which gives one asset, GRS015003007. In the saved Top-10 (<code>predictions.csv</code>) it is at rank 2, so DCG = 1/log<sub>2</sub>3 = 0.630930 and IDCG = 1, giving nDCG@10 = 0.630930. This equals the starter's saved value (0.630930), and the saved relevant count (1) equals mine. The user's latest input transaction is dated 2021-05-24, before the cut-off (<code>hw2/check_one_user.py</code>).</p>
+<p><b>Other checks.</b> (a) In both of my 100-user runs the four baseline rows equal the stand-alone starter run in every field (<code>summarize.py</code> asserts this). (b) Re-encoding 5 evaluated users locally (CPU, fp32, same snapshot) gives cosine 0.99971–0.99975 to the Colab vectors used in the experiment (<code>verify_embeddings.py</code>). (c) The <i>provided</i> CBF baseline is not reproducible across Python processes on the full cohort: its nonempty mean was 0.2518–0.2538 over four runs, and it repeats exactly when <code>PYTHONHASHSEED</code> is fixed. The cause is set-iteration order in <code>content_scores</code>, which changes floating-point sums and therefore tie order. The 100-user CBF numbers were identical in all runs. (d) For stage B, the three training windows end on 2021-04-01, 2021-05-01 and 2021-06-01, and all their features use rows before their own cut-off.</p>
+
+<h2>5. Discussion</h2>
+<p><b>What improved.</b> Placing the LLM neighbour score in a learned reranker gives a method that beats all four provided baselines. The gain is significant against Latest buy, Latest buy or sell and CBF on the full cohort, and against Latest buy and CBF even on the 100-user sample. For my research question, <b>compression is nearly free when the score feeds a reranker</b>: a 2-d UMAP profile is as useful as the full 1024-d vector (0.4790 vs 0.4778). Used alone, UMAP holds its quality down to 2 dimensions where PCA collapses. <b>What failed.</b> (1) The LLM adds nothing measurable. The no-LLM reranker scores 0.4782, the same as the LLM variants; the difference for UMAP-32 is +0.0016 [−0.0021, +0.0052], and the LLM features receive under 1% of the model's gain. Alone, the LLM kNN (0.341) is below kNN on raw purchase vectors (0.407) and below Latest buy (0.465). In this dataset, what an investor bought, and when, carries more signal than a text summary of it. (2) Alone, no UMAP variant meets my pre-registered −0.01 margin, although all come close. <b>Threats.</b> These are teaching settings: one cut-off, a 30-day window, and a reranker trained on only three months. The training windows use embeddings up to 3 months older than their cut-off, while the test embeddings are current. Asset names in the text may let the model use pre-trained knowledge about Greek issuers that postdates the cut-off. The team loader counts sells and keeps reconstructed initial positions, unlike the starter, but both use only pre-cut-off rows. UMAP-32 was not chosen in advance, but all variants beat the baselines, so the conclusion does not depend on that choice. nDCG@10 measures agreement with observed purchases, not suitability or profit. <b>Next experiment.</b> Mask asset names to measure contamination. Add a random-vector control and a TF-IDF control on the same text. Run several cut-offs for the official protocol, and test whether the LLM helps the sparse-history users that Anna studies.</p>
+
+<h3>Team Discussion and Individual Contribution</h3>
+<table>
+<thead><tr><th style="width:22%">Field</th><th>Content <span class="tag">[T] = team decision with Anna, [I] = my own work</span></th></tr></thead>
+<tr><td>Discussed and decided</td><td>[T] After instructor feedback we switched from PCA to UMAP as the main reducer (PCA kept as a side experiment) and from Qwen3 to Qwen3.5. [T] We split the population: I work on warm investors (purchase history), and Anna takes cold-start and sparse-history users, which is her research question. [T] Results are judged against the classical baselines, so the team pipeline has a learned reranker, and I test the LLM representation both alone and inside it.</td></tr>
+<tr><td>Unresolved</td><td>[T] The official project protocol (split, users, label rules) is still pending from the instructor. [T] Whether the final submission keeps the LLM feature at all, given that the reranker without it scores the same here.</td></tr>
+<tr><td>My contribution</td><td>[I] I proposed the encoder change and the dimension grid, chose the PromptEOL prompt and the investor text template, and ran the Qwen3.5 encoding on Colab. [I] I implemented <code>embedding_encoder.py</code> and <code>reranker_encoder.py</code> on the provided adapter, with the no-LLM controls, the full-cohort runs and the paired analyses (<code>paired.py</code>, <code>vs_baselines.py</code>). [I] I did the verification in §4.4, including finding the CBF hash-seed nondeterminism.</td></tr>
+<tr><td>Shared vs. mine</td><td>Shared: the dataset, the starter and its baselines (instructor), the team repository and the feature and reranker code in <code>src/</code>. Mine: everything in <code>hw2/</code> except the downloaded starter folders, the embeddings, and the results and analysis in this report.</td></tr>
+</table>
+
+<h2>6. AI Usage Disclosure</h2>
+<p style="text-align:left"><b>Tool.</b> Claude Code (Anthropic) desktop app, model Claude Opus 5.5 (<code>claude-opus-5-5</code>), 11–15 Nov 2026. <b>Use.</b> The AI agent downloaded the starter from GitHub. From my design decisions it wrote and ran <code>embedding_encoder.py</code>, <code>reranker_encoder.py</code>, <code>verify_embeddings.py</code>, <code>check_one_user.py</code>, <code>paired.py</code>, <code>vs_baselines.py</code> and <code>summarize.py</code>, and ported the team reranker to the starter protocol. It drove the Colab encoding run in my browser, ran the full-cohort and hash-seed experiments, and drafted this report, which I edited. <b>AI-performed checks:</b> checks (a)–(d) in §4.4, the starter's unit tests, and the paired bootstrap. <b>My own verification:</b> the one-user nDCG computation in §4.4, which I re-ran and checked by hand, and the protocol settings in <code>protocol.json</code>. <b>Session export:</b> the native Claude Code JSONL of this session.</p>
+
+<h2>References</h2>
+<div class="refs">
+<p>[1] J. Sanz-Cruzado, N. Droukas, and R. McCreadie, "FAR-Trans: An investment dataset for financial asset recommendation," in <i>Proc. IJCAI-2024 Workshop on Recommender Systems in Finance (Fin-RecSys)</i>, 2024. Available: https://arxiv.org/abs/2407.08692; data: doi:10.5525/gla.researchdata.1658</p>
+<p>[2] H. Lyu <i>et al.</i>, "LLM-Rec: Personalized recommendation via prompting large language models," in <i>Findings of NAACL</i>, 2024. Available: https://arxiv.org/abs/2307.15780</p>
+<p>[3] Y. Hou <i>et al.</i>, "Large language models are zero-shot rankers for recommender systems," in <i>Proc. ECIR</i>, 2024. Available: https://arxiv.org/abs/2305.08845</p>
+<p>[4] T. Jiang <i>et al.</i>, "Scaling sentence embeddings with large language models," arXiv:2307.16645, 2023. Available: https://arxiv.org/abs/2307.16645</p>
+<p>[5] K. Ethayarajh, "How contextual are contextualized word representations? Comparing the geometry of BERT, ELMo, and GPT-2 embeddings," in <i>Proc. EMNLP-IJCNLP</i>, 2019. Available: https://arxiv.org/abs/1909.00512</p>
+<p>[6] L. McInnes, J. Healy, and J. Melville, "UMAP: Uniform manifold approximation and projection for dimension reduction," arXiv:1802.03426, 2018. Available: https://arxiv.org/abs/1802.03426</p>
+<p>[7] Qwen Team, "Qwen3.5-0.8B," model card, Hugging Face, 2026. Available: https://huggingface.co/Qwen/Qwen3.5-0.8B</p>
+<p>[8] S. Jin, "RecSys-LLMs: FAR-Trans starter and LLM baselines," GitHub, commit f6850861, 2026. Available: https://github.com/dryjins/RecSys-LLMs/tree/main/project</p>
+<p>[9] C. J. C. Burges, "From RankNet to LambdaRank to LambdaMART: An overview," Microsoft Research Technical Report MSR-TR-2010-82, 2010.</p>
+</div>
+</body>
+</html>

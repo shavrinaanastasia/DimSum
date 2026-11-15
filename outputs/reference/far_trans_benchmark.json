@@ -1,0 +1,14 @@
+{
+ "source": "github.com/TechyNilesh/far-trans-benchmark, results/_analysis (Verma et al., FMLTS workshop, ACML 2026). Paper protocol: new assets only, 6-month window, 61 dates two weeks apart from 2019-08-01. nDCG@10, seed 0.",
+ "mean_over_61_dates": {"mf_bpr": 0.3541, "lightgcn": 0.3505, "hybrid_ndcg_full": 0.3402, "ours_no_filter": 0.3354, "glassfm_pbuy": 0.3277, "popularity": 0.2709, "random": 0.0110},
+ "best4_per_date": {
+  "2019-11-21": {"mf_bpr": 0.4282, "ours_no_filter": 0.4267, "lightgcn": 0.4135, "hybrid_ndcg_full": 0.4064},
+  "2020-05-22": {"lightgcn": 0.4140, "mf_bpr": 0.4111, "hybrid_ndcg_full": 0.4091, "glassfm_linear": 0.4064},
+  "2020-11-23": {"hybrid_ndcg_full": 0.3884, "mf_bpr": 0.3859, "glassfm_linear": 0.3842, "glassfm_pbuy": 0.3841},
+  "2021-05-25": {"hybrid_ndcg_full": 0.2225, "mf_bpr": 0.2209, "lightgcn": 0.2145, "glassfm_linear": 0.2038},
+  "2021-11-23": {"ours_no_filter": 0.3130, "mf_bpr": 0.2982, "lightgcn": 0.2967, "glassfm_pbuy": 0.2720}
+ },
+ "mf_bpr_per_date": {"2019-11-21": 0.4282, "2020-05-22": 0.4111, "2020-11-23": 0.3859, "2021-05-25": 0.2209, "2021-11-23": 0.2982},
+ "n_eval_users": {"2019-11-21": 2389, "2020-05-22": 1692, "2020-11-23": 2540, "2021-05-25": 1920, "2021-11-23": 2140},
+ "popularity": {"2019-11-21": 0.3434, "2020-05-22": 0.3294, "2020-11-23": 0.3133, "2021-05-25": 0.1339, "2021-11-23": 0.2091}
+}
