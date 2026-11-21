@@ -1,0 +1,392 @@
+{
+  "teaching_settings_not_official_test": true,
+  "cutoff": "2021-06-01",
+  "end_exclusive": "2021-07-01",
+  "users": [
+    "7F4C738BC9D4A144C518",
+    "B6E50192F1453975F157",
+    "8A30590EA4AE29504AEE",
+    "F92A51D29569DCB1C868",
+    "8DD4DC4C90951E67598E",
+    "6E7D25490A67935A1141",
+    "DC4C31CB268182AD9D64",
+    "715E18373D280628037E",
+    "956E17732E5CBE2ADBFF",
+    "46D9095DA703AE1289F8",
+    "42F6BE19121FF2A1E470",
+    "D59A1DA79EF05DB35BBC",
+    "55F5F212E8755BD7E6A6",
+    "421B8C42D925AE7D3498",
+    "F54AF314CC31B6E5B275",
+    "C5BDA04B85A0902240FD",
+    "43CCCF77256D4694EE93",
+    "0BFFD9C891A98BAD971B",
+    "60AF55BB7945CD4B2301",
+    "9DC25A765E6F7E43A19F",
+    "1DEC54DA40D00EADE5C2",
+    "09AB056EA05F565155FD",
+    "7A49933DF36A6581F05A",
+    "23CDA77FE14F6D804F38",
+    "CE6EC721FDFA73BCD199",
+    "9A1407ABC343A0BEE454",
+    "0873F77367B3FA596946",
+    "53D48CFD208E2F2E626B",
+    "F3B6B4C7E1F815C1FFE6",
+    "870E814DB274CFA95600",
+    "6BAA2D5FBCCEAB57C473",
+    "508B4F986C71CD2B8136",
+    "974766F059895A1F7243",
+    "E76C6ACC6AC837819C76",
+    "9259D188B1951A448F62",
+    "EF36A0A4BF8B80601DA2",
+    "50401C6D431DA58DC1A8",
+    "4F149D9CD3B59F348554",
+    "94A16DE0F59F24BB77C2",
+    "07791D6EE6A9AB0C2DBE",
+    "67FDB6843535F5AC6E74",
+    "D4A9D0F1E3847197FBD7",
+    "E6C8439819A164756DA5",
+    "AD0D12E898599A4A386D",
+    "6FA5BF73C309CE8E9ED5",
+    "D6A4C42209EB65C2C0BF",
+    "6B15913A38A56CB253E0",
+    "29C0592F254DB2430C00",
+    "0E72D1BF99E858EEE1AA",
+    "45AA27170792CBC9E45E",
+    "3DBEA786CAEB9F1A3552",
+    "AC72017F6FD8592E219C",
+    "04345543E0F51BEE4607",
+    "8FD0310C1D384F54A616",
+    "E6BE11F6B76985C51E34",
+    "D63DFAE7E53493A5ADD5",
+    "BC466D8F02AEAE3E188A",
+    "0C758932172B6FCDFD87",
+    "D6E68642832B0AECB8C5",
+    "79AC454BE8861E62FBC9",
+    "972F29378E5CA46859D4",
+    "B43AB4599DACB30E18AE",
+    "4DB2384C6767E333F63A",
+    "D693A7CE3175C0785E0F",
+    "8A291D08319009188599",
+    "C481179F90B9CEA19D7A",
+    "705FD472FE54EDA4C3BE",
+    "B95B5CB1DA92034CB60B",
+    "5087D23F907F90F3DDD1",
+    "D55495B39FE52F57F966",
+    "41B818F03A1E1673E78E",
+    "8A220D47B1644E4FD349",
+    "0B6584C369F3EA6893F7",
+    "066ECEB67C061D84286C",
+    "D169F8F0FA1A122ED442",
+    "FDBFCF2DE9B2F38ACCBC",
+    "E29675CF0B9825FBDD28",
+    "1F56D207B97FA15BFBBD",
+    "04671739FA21EB112C07",
+    "3AF20767EAECCADD3B43",
+    "2A02C1C6215C3E76ED40",
+    "5F48B46AE99C0343270D",
+    "F9F863E14273C528E0CD",
+    "54FAD3E1CA1E6589F663",
+    "F59441FE2E56CDB372E0",
+    "A54AF329D16318DF3DDC",
+    "06AE8AC72FD5B2D0FC6D",
+    "0860DF0D12BDF600D9A5",
+    "1A6264E25EADB81AD7F7",
+    "D8D610B7032BCFE7692E",
+    "688CAFDBC409602876B0",
+    "B66AE6864EBCAF2A7B12",
+    "17A4C02B98093891DDE2",
+    "5180B50A10AAD1C7D0F8",
+    "0F275A69F2B1B6FE8F04",
+    "E7C5D1C706266FB72119",
+    "D040911678A4D0E56E9F",
+    "A85F4EA2CB898F63EA15",
+    "CDAEC909A89BB0CD6EFE",
+    "CD334A40C83713CCBA40"
+  ],
+  "repeat_allowed": true,
+  "candidate_count": 50,
+  "empty_truth_policy": "zero in all-user mean; nonempty mean also reported",
+  "excluded_rows": {
+    "reconstructed_initial_position_rows": 38019
+  },
+  "data_sha256": {
+    "transactions.csv": "358871fa1311a802799df86e56c3d633513566965b01412d058e0f8fbe6cd54b",
+    "asset_information.csv": "33f9897b14087068fba53a0bc9e24a0031b096bd3ad3e977e534153f29b7a590",
+    "customer_information.csv": "c4ad52ebca90e32bf3df5eb64f362b7a3437b77d978b22627cc46927fe7064af",
+    "close_prices.csv": "6ba1fe8390b31dfb3ab4e3e824910f9e8da4684cb6074cdb82eb6422a323656d"
+  },
+  "method": "hw3_rerank3",
+  "runtime": {
+    "cutoff": "2021-06-01",
+    "windows": [
+      [
+        "2021-05-01",
+        "2021-05-31"
+      ],
+      [
+        "2021-04-01",
+        "2021-05-01"
+      ],
+      [
+        "2021-03-01",
+        "2021-03-31"
+      ],
+      [
+        "2021-02-01",
+        "2021-03-03"
+      ],
+      [
+        "2021-01-01",
+        "2021-01-31"
+      ],
+      [
+        "2020-12-01",
+        "2020-12-31"
+      ],
+      [
+        "2020-11-01",
+        "2020-12-01"
+      ],
+      [
+        "2020-10-01",
+        "2020-10-31"
+      ],
+      [
+        "2020-09-01",
+        "2020-10-01"
+      ],
+      [
+        "2020-08-01",
+        "2020-08-31"
+      ],
+      [
+        "2020-07-01",
+        "2020-07-31"
+      ],
+      [
+        "2020-06-01",
+        "2020-07-01"
+      ]
+    ],
+    "params": {
+      "objective": "lambdarank",
+      "metric": "ndcg",
+      "eval_at": [
+        10
+      ],
+      "learning_rate": 0.03,
+      "num_leaves": 31,
+      "min_data_in_leaf": 50,
+      "feature_fraction": 0.5,
+      "bagging_fraction": 0.8,
+      "bagging_freq": 1,
+      "lambdarank_truncation_level": 20,
+      "verbose": -1,
+      "seed": 0
+    },
+    "lgb_seeds": 3,
+    "configs": {
+      "behaviour_hw2": "base",
+      "rebuy": "base+rebuy",
+      "rebuy_tfidf": "base+rebuy+asset_tfidf",
+      "rebuy_assetllm": "base+rebuy+asset_llm",
+      "full": "base+rebuy+asset_llm+inv_llm",
+      "main": "base+rebuy+asset_tfidf+asset_llm+inv_llm",
+      "rebuy_invllm": "base+rebuy+inv_llm"
+    },
+    "variants": {
+      "behaviour_hw2": {
+        "best_iteration": 349,
+        "valid_ndcg10_candidates": 0.6144962713980743,
+        "gain_share": {
+          "rebuy": 0.0,
+          "asset_llm": 0.0,
+          "asset_tfidf": 0.0,
+          "inv_llm": 0.0
+        },
+        "top_features": {
+          "mf_rank": 803318.0,
+          "uknn_rank": 278742.0,
+          "n_buy": 176658.0,
+          "val_share": 159578.0,
+          "ease_rank": 82486.0,
+          "pop30": 78877.0,
+          "dec90": 74073.0,
+          "pop90": 64245.0,
+          "days_last": 41500.0,
+          "pop_all": 33222.0,
+          "itemknn_rank": 31769.0,
+          "cbf": 28933.0
+        }
+      },
+      "rebuy": {
+        "best_iteration": 314,
+        "valid_ndcg10_candidates": 0.6188950590859218,
+        "gain_share": {
+          "rebuy": 0.3034866228941186,
+          "asset_llm": 0.0,
+          "asset_tfidf": 0.0,
+          "inv_llm": 0.0
+        },
+        "top_features": {
+          "mf_rank": 705858.0,
+          "rec_rank": 390231.0,
+          "freq_rank": 201356.0,
+          "ease_rank": 102016.0,
+          "val_share": 99945.0,
+          "pop30": 67737.0,
+          "pop90": 59428.0,
+          "dec90": 48161.0,
+          "itemknn_rank": 39954.0,
+          "n_buy": 39308.0,
+          "pop_all": 35557.0,
+          "u_rebuy_rate": 31046.0
+        }
+      },
+      "rebuy_tfidf": {
+        "best_iteration": 490,
+        "valid_ndcg10_candidates": 0.6215662084600897,
+        "gain_share": {
+          "rebuy": 0.17520971475720498,
+          "asset_llm": 0.0,
+          "asset_tfidf": 0.16854480984849118,
+          "inv_llm": 0.0
+        },
+        "top_features": {
+          "mf_rank": 796089.0,
+          "a_tfidf_prof_rank": 337465.0,
+          "rec_rank": 245233.0,
+          "val_share": 96555.0,
+          "pop30": 85860.0,
+          "ease_rank": 76448.0,
+          "freq_rank": 64930.0,
+          "pop90": 50110.0,
+          "a_tfidf_prof": 44096.0,
+          "pop180": 37904.0,
+          "u_rebuy_rate": 34322.0,
+          "pop_all": 26149.0
+        }
+      },
+      "rebuy_assetllm": {
+        "best_iteration": 340,
+        "valid_ndcg10_candidates": 0.6202562389883312,
+        "gain_share": {
+          "rebuy": 0.29407642614379675,
+          "asset_llm": 0.017029283043428083,
+          "asset_tfidf": 0.0,
+          "inv_llm": 0.0
+        },
+        "top_features": {
+          "mf_rank": 796304.0,
+          "rec_rank": 375710.0,
+          "freq_rank": 200495.0,
+          "ease_rank": 91299.0,
+          "pop30": 85965.0,
+          "val_share": 74187.0,
+          "dec90": 65485.0,
+          "pop90": 58349.0,
+          "uknn_rank": 34675.0,
+          "u_rebuy_rate": 33731.0,
+          "itemknn_rank": 33240.0,
+          "pop180": 26857.0
+        }
+      },
+      "full": {
+        "best_iteration": 311,
+        "valid_ndcg10_candidates": 0.620229032829291,
+        "gain_share": {
+          "rebuy": 0.2745322724050244,
+          "asset_llm": 0.016233446899698602,
+          "asset_tfidf": 0.0,
+          "inv_llm": 0.0038250814874006534
+        },
+        "top_features": {
+          "mf_rank": 798371.0,
+          "rec_rank": 397860.0,
+          "freq_rank": 135088.0,
+          "pop30": 79944.0,
+          "ease_rank": 79806.0,
+          "pop90": 64340.0,
+          "val_share": 64041.0,
+          "uknn_rank": 63749.0,
+          "n_buy": 46733.0,
+          "dec30": 35133.0,
+          "pop_all": 30197.0,
+          "u_rebuy_rate": 29911.0
+        }
+      },
+      "main": {
+        "best_iteration": 357,
+        "valid_ndcg10_candidates": 0.6238114626585177,
+        "gain_share": {
+          "rebuy": 0.20146068718032045,
+          "asset_llm": 0.008277448696810207,
+          "asset_tfidf": 0.17315098450292712,
+          "inv_llm": 0.0036288988626349103
+        },
+        "top_features": {
+          "mf_rank": 758791.0,
+          "a_tfidf_prof_rank": 330816.0,
+          "rec_rank": 290748.0,
+          "freq_rank": 80143.0,
+          "pop30": 79595.0,
+          "ease_rank": 79187.0,
+          "a_tfidf_prof": 54634.0,
+          "val_share": 53933.0,
+          "pop90": 49731.0,
+          "pop180": 38993.0,
+          "u_rebuy_rate": 33655.0,
+          "mf": 27003.0
+        }
+      },
+      "rebuy_invllm": {
+        "best_iteration": 346,
+        "valid_ndcg10_candidates": 0.6195738788237538,
+        "gain_share": {
+          "rebuy": 0.26657759622591326,
+          "asset_llm": 0.0,
+          "asset_tfidf": 0.0,
+          "inv_llm": 0.00379679738769611
+        },
+        "top_features": {
+          "mf_rank": 696001.0,
+          "rec_rank": 349749.0,
+          "freq_rank": 159498.0,
+          "uknn_rank": 101301.0,
+          "val_share": 100734.0,
+          "ease_rank": 93514.0,
+          "pop30": 79878.0,
+          "pop90": 70152.0,
+          "dec90": 65031.0,
+          "n_buy": 55825.0,
+          "u_rebuy_rate": 35507.0,
+          "itemknn_rank": 35442.0
+        }
+      }
+    },
+    "timings_seconds": {
+      "train_features_seconds": 0.6218801999930292,
+      "test_features_seconds": 50.74440259998664,
+      "behaviour_hw2_train_seconds": 262.8092905000085,
+      "behaviour_hw2_predict_seconds": 0.47112110001035035,
+      "rebuy_train_seconds": 260.76571129995864,
+      "rebuy_predict_seconds": 0.23088419996201992,
+      "rebuy_tfidf_train_seconds": 345.48343569994904,
+      "rebuy_tfidf_predict_seconds": 0.3571786000393331,
+      "rebuy_assetllm_train_seconds": 250.95200379996095,
+      "rebuy_assetllm_predict_seconds": 0.21470410004258156,
+      "full_train_seconds": 251.329158400069,
+      "full_predict_seconds": 0.22051780007313937,
+      "main_train_seconds": 282.5972605999559,
+      "main_predict_seconds": 0.22602479998022318,
+      "rebuy_invllm_train_seconds": 248.0988654999528,
+      "rebuy_invllm_predict_seconds": 0.224534000037238,
+      "total_seconds": 1971.1295211999677
+    },
+    "fast": false,
+    "feature_version": "v1",
+    "investor_embedding_test": "2021-06-01"
+  },
+  "failures": []
+}

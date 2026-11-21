@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LLM Encoders in a Learned Reranker</title>
+<style>
+  @page { size: A4; margin: 13mm 15mm 13mm 15mm; }
+  body { font-family: "Times New Roman", Times, serif; font-size: 10pt; line-height: 1.26; color: #000; margin: 0; }
+  h1 { font-size: 14.5pt; text-align: center; margin: 0 0 4px 0; line-height: 1.2; }
+  .authors { text-align: center; font-size: 9.6pt; margin-bottom: 2px; }
+  .assign { text-align: center; font-size: 9pt; font-style: italic; margin-bottom: 7px; }
+  h2 { break-after: avoid; font-size: 11pt; margin: 8px 0 3px 0; font-variant: small-caps; }
+  h3 { break-after: avoid; font-size: 10pt; margin: 5px 0 2px 0; font-style: italic; font-weight: bold; }
+  p { margin: 0 0 4px 0; text-align: justify; }
+  .abstract { font-size: 9.5pt; }
+  table { border-collapse: collapse; width: 100%; font-size: 8.4pt; line-height: 1.18; margin: 3px 0 4px 0; }
+  th, td { border: 0.6px solid #555; padding: 1.5px 4px; vertical-align: top; text-align: left; }
+  td.n, th.n { text-align: right; }
+  th { background: #eee; }
+  tr { page-break-inside: avoid; }
+  tr.grp td { background: #f6f6f6; font-style: italic; }
+  tr.best td { font-weight: bold; }
+  .cap { font-size: 8.5pt; text-align: center; margin: 1px 0 4px 0; font-variant: small-caps; }
+  ul, ol { margin: 0 0 4px 0; padding-left: 18px; }
+  li { margin: 0 0 1px 0; text-align: justify; }
+  .rq { border: 0.8px solid #000; padding: 3px 6px; margin: 3px 0; background: #fafafa; }
+  .refs p { font-size: 8.7pt; text-align: left; padding-left: 20px; text-indent: -20px; margin-bottom: 2px; }
+  .tag { font-size: 8pt; font-weight: bold; }
+  code { font-family: "Courier New", monospace; font-size: 8.5pt; }
+</style>
+</head>
+<body>
+
+<h1>Does an LLM Encoder Help a Learned Financial Reranker?<br>A Controlled Test of Qwen3.5 Asset and Investor Embeddings on Four FAR-Trans Windows</h1>
+<div class="authors"><b>Anastasia Shavrina</b> (Анастасия Шаврина) · aoshavrina@edu.hse.ru · Team <b>DimSum</b> (with Анна Шрейбер)<br>Team repository: https://github.com/shavrinaanastasia/DimSum · experiment commit: <code>@@COMMIT@@</code> (code in <code>hw3/</code>)</div>
+<div class="assign">LLM4Rec, HSE University — Homework 3 (Test Your Project Idea), individual report · 21 November 2026</div>
+
+<p class="abstract"><b><i>Abstract</i></b>—In HW2 a LightGBM LambdaRank reranker beat every provided baseline, but its LLM investor feature added nothing. For HW3 I strengthened the reranker and gave the LLM a fairer test. The reranker is now trained on 12 monthly windows, gets 17 re-buy timing features, and its hyper-parameters were chosen on a validation month. The LLM (Qwen3.5-0.8B, role: <b>Encoder</b>, both on the item and on the user side) gets two chances: an asset-text embedding of all 721 asset descriptions, and the HW2 investor embedding (UMAP-32). Each has a matched control: the same features computed from a TF-IDF vector of the same text, and the same reranker without the feature. The evaluation sets and metrics were fixed before comparing methods; one preliminary D0 run is disclosed in §3.2. They are the starter's 100-user sample (T100) and the starter's full warm cohort at four cut-offs: D0 2021-06-01 (primary), D1 2021-09-01, D2 2021-12-01 and D3 2022-06-01, with 10,404–14,475 users and 4,728 future buyers in total. <b>Result 1:</b> the main model beats Latest buy, the strongest baseline, on every dev set. On D0 it scores 0.0546 / 0.4821 (all / nonempty) against 0.0526 / 0.4648; pooled over all four sets the nonempty gain is +0.0335, 95% CI [+0.0282, +0.0388]. <b>Result 2</b> (ablation): removing the LLM features changes nonempty nDCG@10 by −0.0003 [−0.0021, +0.0016]. The LLM asset encoder against its TF-IDF control differs by +0.0000 [−0.0019, +0.0019], so any LLM effect is smaller than 0.002 in either direction. <b>Failure analysis:</b> the gain is largest for users with 1–4 past assets (+0.07 to +0.08) and for users whose next purchases are all new assets. The main remaining loss is that 66% of those new-asset buyers still score 0, although the candidates contain 81–90% of the new assets they bought: the problem is ranking, not retrieval.</p>
+
+<h2>1. Introduction</h2>
+<p><b>Project idea.</b> Our team asks where an LLM can help a Top-10 asset recommender on FAR-Trans [1]. My part covers investors with a purchase history; Anna works on cold-start and sparse-history users. In HW1 I asked how much of an LLM investor embedding a recommender needs. In HW2 I found that a 2-d UMAP projection is as useful as the full 1024-d vector inside a reranker, but also that the reranker without any LLM feature scored the same (0.4782 vs 0.4798 nonempty). That left two open problems, which HW3 addresses. (i) The HW2 reranker was weak: three training months and no tuning. A null LLM result on a weak model is not convincing, and it also costs benchmark points. (ii) The LLM was tested only on the user side, and without a text control. Following the Session 3 advice to use strong baselines and matched controls, I made two changes before testing the LLM again. First, I made the non-LLM model as strong as I could, using validation data only. Second, I gave every LLM feature a control built from identical text without an LLM.</p>
+<div class="rq"><b>Claim tested (Session 3 template).</b> For warm FAR-Trans investors [<b>users</b>], adding Qwen3.5 Encoder features (asset-text similarity to the user's portfolio and investor-profile neighbour scores) [<b>evidence</b>] changes nDCG@10 on 30-day future purchases [<b>metric</b>], relative to the same LambdaRank reranker with TF-IDF features on the same text, or with no text features [<b>control</b>], over four monthly cut-offs of the starter protocol [<b>conditions</b>]. <b>LLM role:</b> Encoder only; ranking is done by LightGBM, and the LLM generates no text.</div>
+
+<h2>2. Related Work</h2>
+<p>FAR-Trans [1] defines the data and nDCG@10 on future purchases. The course package adapts LLM-Rec [2] and LLMRank [3]: the first enriches item text with an LLM, the second uses the LLM as a zero-shot <i>Ranker</i> over fixed candidates. I use the LLM as an <i>Encoder</i> instead. PromptEOL [4] turns a decoder-only LLM into a sentence encoder by asking it to compress the input "in one word" and taking the last hidden state. I apply it both to asset descriptions and, as in HW2, to investor profiles compressed with UMAP [5]. The Session 3 slides separate <i>candidate retrieval</i> from <i>evidence retrieval</i>, as in RAG [6]. My pipeline uses only candidate retrieval: user-kNN, item-kNN, EASE [7], implicit ALS [8] and popularity. The LLM adds no retrieved evidence; it adds dense features to a LambdaMART-style ranker [9]. My text control is TF-IDF [10], computed on exactly the same asset strings.</p>
+
+<h2>3. Method</h2>
+<h3>3.1 Pipeline (<code>hw3/rerank3.py</code>)</h3>
+<ol>
+<li><b>Data and protocol.</b> I call the provided <code>data_adapter.load</code> for users, cut-off, eligible assets (767–795), truth and popularity. Final rankings go through the provided <code>save_results</code>, which validates them and computes nDCG@10. The four provided baselines therefore run unchanged in the same job.</li>
+<li><b>Candidates</b> (as in HW2): each user's own past buys, plus the top 50 assets from each of user-kNN, item-kNN, EASE, iALS and 90-day popularity. That is 69–158 candidates per user (median 95), restricted to eligible assets.</li>
+<li><b>Features</b> (70 in the main model):
+  <ul>
+  <li>45 HW2 behaviour features: repeat counts, recency, popularity and trend, returns, CBF similarity, model scores and ranks, risk fit.</li>
+  <li>17 new <b>re-buy timing</b> features, motivated by a headroom analysis: 63–83% of future purchases are repeats. Examples are the median gap and gap CV between a user's buys of the asset, the days "due" relative to that gap, buys in the last 30/60/180 days, whether the asset was sold after its last buy, and the user's re-buy rate and new-asset share.</li>
+  <li>3 <b>asset-Encoder</b> features: cosine between the asset and the user's 365-day decayed portfolio profile, maximum cosine to any other asset the user bought, and the profile rank.</li>
+  <li>3 <b>TF-IDF control</b> features: identical, computed on character 3–5-gram TF-IDF of the same text.</li>
+  <li>2 <b>investor-Encoder</b> features: the HW2 UMAP-32 neighbour score and its rank.</li>
+  </ul></li>
+<li><b>Asset Encoder (LLM call, <code>hw3/embed_assets.py</code>).</b>
+  <ul>
+  <li>Model: frozen <code>Qwen/Qwen3.5-0.8B</code> [11], revision <code>2fc06364715b967f1860aea9cf38778875588b17</code>.</li>
+  <li>Prompt: <code>This financial asset:\n"{text}"\nmeans in one word:"</code>. The text is "Asset: {name}; category: …; subcategory: …; sector: …; industry: …" from <code>asset_information.csv</code>.</li>
+  <li>Encoding: the last-token hidden state (1024-d, L2-normalised) for each of 721 distinct texts. It ran with fp32 on CPU, max 128 tokens, batch 16, in about 20 min, and is cached.</li>
+  <li>The Encoder emits vectors, not text, so no invalid output is possible. The investor vectors are the HW2 ones (Colab T4, fp16).</li>
+  </ul></li>
+<li><b>Training without leakage.</b>
+  <ul>
+  <li>Training uses 12 monthly windows before the cut-off. Each label window is [<i>c</i>, min(<i>c</i>+30 d, cut-off)), and every feature uses only rows before its own window cut-off <i>c</i>.</li>
+  <li>A window at <i>c</i> uses the newest investor embedding with cut-off ≤ <i>c</i>; otherwise the feature is missing (NaN). The earliest embedding is 2021-03-01, so the investor feature exists in only 3/6/9/12 of the 12 training windows for D0/D1/D2/D3. All test users have an embedding.</li>
+  <li>The most recent window is the validation split for early stopping. The model is then refit on all 12 windows with 3 seeds, and the scores are averaged.</li>
+  <li>Top-10 is taken by score; padding with starter popularity was never needed.</li>
+  </ul></li>
+</ol>
+<h3>3.2 Model selection on validation only</h3>
+<p>Hyper-parameters were chosen on the D0 validation month (2021-05, inside the training data) with <code>hw3/tune.py</code>, <code>tune2.py</code> and <code>tune_extra.py</code>. The logs are in <code>hw3/outputs/tune_*</code>. The same month also serves for early stopping, so the validation scores are slightly optimistic.</p>
+<p><b>Disclosure.</b> Before tuning, I ran one preliminary comparison on D0 test truth (<code>outputs/dev_D0_fast</code>, feature_fraction 0.8).</p>
+<ul>
+<li>That run's two best variants, TF-IDF and both-LLM, scored 0.4823 nonempty; <code>main</code> was later defined as their union.</li>
+<li>D0 is therefore not a clean held-out set for choosing between my variants. D1–D3 were first evaluated only after every setting below was fixed, so they are the clean confirmation.</li>
+<li>D3 was moved from 2022-03-01 to 2022-06-01 after only the <i>baseline</i> run at 2022-03-01, before any run of my models there.</li>
+</ul>
+<p>The settings chosen:</p>
+<ul>
+<li>LightGBM <code>feature_fraction</code> 0.5, chosen from a 12-setting grid: validation nDCG@10 0.6187 vs 0.6164 for the default, both 3-seed averages. The other settings are lr 0.03, 31 leaves, min_data_in_leaf 50 and truncation 20.</li>
+<li>12 training windows rather than 24 (0.6187 vs 0.6182).</li>
+<li>A group of 8 extra popularity and seasonality features was rejected (0.6153 vs 0.6180, single seed).</li>
+<li>The main model was fixed as all feature groups together. After the dev results I did <i>not</i> switch to a variant that scored higher on one dev set.</li>
+</ul>
+
+<h2>4. Experiments</h2>
+<h3>4.1 Setup</h3>
+<p><b>Protocol:</b> the provided starter (<code>dryjins/RecSys-LLMs</code> commit f6850861 [12], unmodified, with all 58 unit tests passing).</p>
+<ul>
+<li><b>Common settings:</b> warm users, cut-off exclusive, labels are eligible Buys in the next 30 days, repeats allowed, and empty truth scores 0 and stays in the all-user mean.</li>
+<li><b>T100:</b> the starter's 100 users at 2021-06-01, <code>protocol_hash</code> 50efd4ae….</li>
+<li><b>Full warm cohort (<code>--max-users 0</code>):</b> D0 2021-06-01 (8645343a…, primary), D1 2021-09-01 (76e5a116…), D2 2021-12-01 (93926bc2…), D3 2022-06-01 (5d173c78…).</li>
+<li><b>Why D3 is 2022-06-01:</b> investor embeddings exist for that date. This was decided before any comparison.</li>
+<li><b>Development runs (<code>--fast</code>):</b> rankings are built only for nonempty users, a pure compute shortcut. Empty-truth users get 0 for every method, so the all-user means are identical.</li>
+<li><b>Statistics:</b> paired bootstrap over nonempty users, 10,000 resamples. The pooled CI resamples within each dev set (<code>compare.py</code>, <code>pooled.py</code>).</li>
+<li><b>Hardware:</b> AMD Ryzen 7 3750H laptop (4 cores / 8 threads, 16 GB), CPU only.</li>
+<li><b>Software:</b> Python 3.11.9, LightGBM 4.7.0, scikit-learn 1.9.1, pandas 3.1.0, numpy 2.4.6, torch 2.15 CPU, transformers 5.22.2.</li>
+<li><b>Seeds:</b> <code>PYTHONHASHSEED=0</code> (see HW2 for the provided CBF baseline's hash-seed sensitivity), LightGBM seeds 0–2, UMAP seed 42.</li>
+</ul>
+
+<h3>4.2 Main experiment</h3>
+<table>
+<thead><tr><th>Method</th><th class="n">T100 2021-06<br>100; 11</th><th class="n">D0 2021-06<br>10,404; 1,178</th><th class="n">D1 2021-09<br>11,894; 1,316</th><th class="n">D2 2021-12<br>13,258; 966</th><th class="n">D3 2022-06<br>14,475; 1,268</th></tr></thead>
+<tr class="grp"><td colspan="6">Provided baselines (unchanged starter code, same runs)</td></tr>
+<tr><td>Popularity</td><td class="n">0.0286 / 0.2599</td><td class="n">0.0262 / 0.2312</td><td class="n">0.0198 / 0.1788</td><td class="n">0.0142 / 0.1948</td><td class="n">0.0298 / 0.3400</td></tr>
+<tr><td>CBF</td><td class="n">0.0201 / 0.1827</td><td class="n">0.0286 / 0.2528</td><td class="n">0.0248 / 0.2237</td><td class="n">0.0178 / 0.2449</td><td class="n">0.0293 / 0.3344</td></tr>
+<tr><td>Latest buy</td><td class="n">0.0277 / 0.2520</td><td class="n">0.0526 / 0.4648</td><td class="n">0.0522 / 0.4719</td><td class="n">0.0376 / 0.5160</td><td class="n">0.0546 / 0.6232</td></tr>
+<tr><td>Latest buy or sell</td><td class="n">0.0271 / 0.2464</td><td class="n">0.0509 / 0.4496</td><td class="n">0.0517 / 0.4675</td><td class="n">0.0367 / 0.5037</td><td class="n">0.0536 / 0.6124</td></tr>
+<tr class="grp"><td colspan="6">Provided LLM comparison for an Encoder (starter <code>far-trans-llm</code>, Qwen3-1.7B, GPU; numbers as reported in its HW2_RESULTS.md, same 100 users, not re-run)</td></tr>
+<tr><td>Provided LLM-Rec-inspired encoder</td><td class="n">0.0254 / 0.2306</td><td class="n" colspan="4">not run: GPU generation of 767 paraphrases is not feasible on my CPU</td></tr>
+<tr><td>Its matched control: original-text TF-IDF CBF</td><td class="n">0.0235 / 0.2140</td><td class="n" colspan="4">—</td></tr>
+<tr class="grp"><td colspan="6">HW2 method for reference: 3-window reranker + LLM-UMAP-32 (HW2 report)</td></tr>
+<tr><td>HW2 reranker + UMAP-32</td><td class="n">0.0386 / 0.3506</td><td class="n">0.0543 / 0.4798</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>
+<tr class="grp"><td colspan="6">HW3 main method (fixed on validation)</td></tr>
+<tr class="best"><td>main: re-buy + TF-IDF + LLM asset + LLM investor</td><td class="n">0.0380 / 0.3451</td><td class="n">0.0546 / 0.4821</td><td class="n">0.0578 / 0.5221</td><td class="n">0.0396 / 0.5436</td><td class="n">0.0577 / 0.6590</td></tr>
+<tr><td>Δ main − Latest buy, nonempty [95% CI]</td><td class="n">+0.0931 [+.027, +.168]</td><td class="n">+0.0172 [+.008, +.027]</td><td class="n">+0.0502 [+.039, +.062]</td><td class="n">+0.0276 [+.016, +.040]</td><td class="n">+0.0358 [+.026, +.045]</td></tr>
+</table>
+<div class="cap">Table 1. Development results, not official benchmark scores. nDCG@10, all users / nonempty users (primary = all users). Users; nonempty counts under each set. Failed or invalid rankings: 0 in every run.</div>
+<p><b>Reading Table 1.</b> The main model beats all four baselines on every full-cohort set. Against Latest buy, the strongest baseline, every CI excludes 0, and pooled over the four sets the nonempty gain is +0.0335 [+0.0282, +0.0388]. In all-user terms that is +0.0019 (D0) to +0.0056 (D1), because only 7–11% of warm users buy in any 30-day window. Compared with my HW2 method, the main model is slightly higher on D0 (0.4821 vs 0.4798 nonempty) and slightly lower on T100 (0.0380 vs 0.0386). The HW2 numbers are copied from that report, not re-run, so I make no claim that HW3 improves on HW2. The provided LLM-Rec encoder beats its own text control on T100 (+0.0019 all-user), but it stays below Popularity and both recency baselines, and well below the main model. On T100 the main model (0.0380) beats Latest buy, Latest buy or sell and CBF with CIs above 0. Against Popularity the gain is +0.0094 all-user, but its CI includes 0, because only 11 of the 100 users have labels. With so few labels the T100 ordering of my variants (0.0355–0.0384) is noise, and it is not used for any decision.</p>
+<p><b>Runtime</b> (full D0 run, 10,404 users, not <code>--fast</code>): recommendation generation for all users is the cost that counts for the benchmark tie-break.</p>
+<ul>
+<li><b>Recommendation generation: 348 s.</b> Of this, test candidates and features take 318 s and scoring and Top-10 for all 10,404 users take 30 s.</li>
+<li><b>Training: 347 s,</b> early-stopping fit plus 3-seed refit on 12 windows of cached features. Building the training features once took about 12–15 min (60–80 s per window) before caching.</li>
+<li><b>Whole run: 1,286 s,</b> including the ablation variant.</li>
+<li><b>On T100:</b> 51 s generation, 283 s training.</li>
+<li><b>Provided baselines:</b> the whole starter run takes 18 s on T100.</li>
+</ul>
+<p>The times above exclude the one-off asset encoding (about 20 min on CPU) and the HW2 investor encoding (78 min on a T4 for five cut-offs), both cached.</p>
+
+<h3>4.3 Ablation: the LLM component</h3>
+<table>
+<thead><tr><th>Variant (same candidates, labels, windows, parameters)</th><th class="n">#feat</th><th class="n">D0</th><th class="n">D1</th><th class="n">D2</th><th class="n">D3</th><th class="n">Pooled Δ vs reference, nonempty [95% CI]</th></tr></thead>
+<tr><td>main (all groups)</td><td class="n">70</td><td class="n">.4821</td><td class="n">.5221</td><td class="n">.5436</td><td class="n">.6590</td><td>—</td></tr>
+<tr class="best"><td><b>Ablation:</b> main without LLM features (= re-buy + TF-IDF)</td><td class="n">65</td><td class="n">.4812</td><td class="n">.5215</td><td class="n">.5445</td><td class="n">.6609</td><td>main − this: −0.0003 [−0.0021, +0.0016]</td></tr>
+<tr><td>re-buy + LLM asset Encoder</td><td class="n">65</td><td class="n">.4806</td><td class="n">.5218</td><td class="n">.5451</td><td class="n">.6607</td><td>vs TF-IDF control: +0.0000 [−0.0019, +0.0019]</td></tr>
+<tr><td>re-buy + LLM investor Encoder</td><td class="n">64</td><td class="n">.4794</td><td class="n">.5250</td><td class="n">.5414</td><td class="n">.6587</td><td>vs re-buy: −0.0005 [−0.0027, +0.0016]</td></tr>
+<tr><td>re-buy + both LLM Encoders</td><td class="n">67</td><td class="n">.4813</td><td class="n">.5233</td><td class="n">.5428</td><td class="n">.6618</td><td>vs re-buy: +0.0006 [−0.0015, +0.0026]</td></tr>
+<tr><td>re-buy only (no text features)</td><td class="n">62</td><td class="n">.4822</td><td class="n">.5258</td><td class="n">.5419</td><td class="n">.6568</td><td>vs HW2 features: +0.0010 [−0.0018, +0.0039]</td></tr>
+<tr><td>HW2 feature set, 12 windows</td><td class="n">45</td><td class="n">.4813</td><td class="n">.5224</td><td class="n">.5381</td><td class="n">.6603</td><td>main − this: +0.0009 [−0.0021, +0.0038]</td></tr>
+</table>
+<div class="cap">Table 2. Nonempty nDCG@10 per dev set; pooled paired differences over 4,728 nonempty user-windows. Per-set CIs of main against every variant (<code>compare.py</code>) all include 0.</div>
+<p><b>Reading Table 2.</b> No LLM effect is detectable. Every LLM-vs-control difference is inside ±0.0006, and each CI rules out effects larger than about ±0.0027. Which variant scores highest changes from one set to the next (re-buy on D0/D1, asset-LLM on D2, both-LLM on D3), so the differences are noise. The model does use the text features. In the main model, TF-IDF receives 15–18% of the total split gain on D0–D2 (2% on D3), the LLM asset features about 1%, and the investor features 0.2–0.5%. They do not change the top of the ranking, though; my reading is that they mostly repeat item-identity information that the collaborative scores already carry. The re-buy features take 20–44% of the gain, yet they too add only +0.0010. No new feature group produces a measurable gain on its own.</p>
+<p><b>A fairer test of the investor Encoder.</b> On D0–D2 most training windows lack the investor feature, which biases its test towards null. D3 is the only set where all 12 windows have it:</p>
+<ul>
+<li>investor features alone vs re-buy: +0.0019 [−0.0036, +0.0074];</li>
+<li>both Encoders vs re-buy: +0.0050 [+0.0006, +0.0095].</li>
+</ul>
+<p>The second difference is nominally significant, but it is one of many uncorrected comparisons and does not hold in the pooled analysis. I report it as a lead to test on the official set, not as a finding.</p>
+
+<h3>4.4 Failure analysis (<code>hw3/failure.py</code>)</h3>
+<table>
+<thead><tr><th>Group (pooled D0–D3, nonempty)</th><th class="n">Users</th><th class="n">main</th><th class="n">Latest buy</th><th class="n">Δ</th><th>Notes</th></tr></thead>
+<tr><td>1 past asset</td><td class="n">336</td><td class="n">.6664</td><td class="n">.5866</td><td class="n">+.0798</td><td>largest gain; main is worse than Latest buy for 0–9% of these users</td></tr>
+<tr><td>2–4 past assets</td><td class="n">988</td><td class="n">.6539</td><td class="n">.5878</td><td class="n">+.0661</td><td></td></tr>
+<tr><td>5–9 past assets</td><td class="n">1,279</td><td class="n">.5708</td><td class="n">.5377</td><td class="n">+.0332</td><td></td></tr>
+<tr><td>10+ past assets</td><td class="n">2,125</td><td class="n">.4779</td><td class="n">.4667</td><td class="n">+.0113</td><td>D0: −0.0022; main is worse than Latest buy for 22–35% of these users</td></tr>
+<tr><td>Next buys: repeats only</td><td class="n">2,891</td><td class="n">.7279</td><td class="n">.7129</td><td class="n">+.0150</td><td>61% of buyers</td></tr>
+<tr><td>Next buys: mixed</td><td class="n">818</td><td class="n">.4468</td><td class="n">.4132</td><td class="n">+.0336</td><td></td></tr>
+<tr><td>Next buys: new assets only</td><td class="n">1,019</td><td class="n">.1432</td><td class="n">.0571</td><td class="n">+.0861</td><td>main scores 0 for 674 of these users (66%)</td></tr>
+</table>
+<div class="cap">Table 3. History = distinct assets bought before the cut-off. "New" = not bought by this user before.</div>
+<p><b>Failure modes.</b></p>
+<ol>
+<li><b>Heavy users.</b> For users with 10+ past assets the main model barely beats Latest buy, and on D0 it is slightly worse. Their next buys are usually among dozens of past assets, and recency alone is already a strong ordering. The model loses to Latest buy for 20% of all nonempty users (959 of 4,728) and wins for 31% (1,489).</li>
+<li><b>New-asset buyers.</b> These are 22% of buyers. The gain over Latest buy is largest here (+0.086), but 66% of them still score 0. Coverage shows the cause is ranking, not retrieval (<code>hw3/coverage.py</code>):
+  <ul>
+  <li>the candidates contain 93–98% of all future purchases and 81–90% of the new-asset purchases;</li>
+  <li>89–97% of buyers have every purchase among their candidates.</li>
+  </ul>
+  The model ranks the user's past assets above the new ones, which is right for most users but fails for these. Text similarity to the portfolio, from the LLM or from TF-IDF, did not fix this. My reading is that investors' new purchases rarely resemble their holdings by name or sector.</li>
+<li><b>Variation across windows.</b> The nonempty share differs by window (7.3–11.3%), so all-user means are not comparable across cut-offs. That main beats Latest buy holds in every window. The order among my variants does not.</li>
+</ol>
+
+<h3>4.5 Verification</h3>
+<p><b>My personal check (one user, by hand; <code>hw3/check_one_user.py</code>).</b> I took user 6FA5BF73… under <code>main</code> in the T100 run, the labelled user with the most future purchases. The check script was AI-written; I ran it myself, checked its filter, and did the arithmetic below by hand. It recomputes the truth directly from <code>transactions.csv</code> rather than through the starter's code path: Buy, 2021-06-01 ≤ <i>t</i> &lt; 2021-07-01, positive transaction ID, ISIN in the starter's eligible list. That gives 6 assets, all of them bought before the cut-off too (repeats). In the saved Top-10 the hits are at ranks 1, 3 and 5 (GRS419003009, GRS260333000, GRS518003009).
+<ul>
+<li>DCG = 1 + 1/log<sub>2</sub>4 + 1/log<sub>2</sub>6 = 1 + 0.5 + 0.386853 = 1.886853.</li>
+<li>IDCG = Σ<sub><i>r</i>=1..6</sub> 1/log<sub>2</sub>(<i>r</i>+1) = 3.304666.</li>
+<li>nDCG@10 = <b>0.570966</b>, equal to the starter's saved value; the saved relevant count (6) equals mine.</li>
+</ul></p>
+<p><b>Other checks.</b></p>
+<ul>
+<li>(a) The provided baseline rows in my runs equal stand-alone starter runs. The starter's <code>protocol.json</code> for each set, which holds its hash, is saved as <code>starter_protocol.json</code> in the corresponding run folder.</li>
+<li>(b) A leakage incident was caught and fixed. A helper script once built four early training windows with an embedding newer than their cut-off. I deleted those cached frames, made the rule a single function (<code>inv_for</code>), and confirmed that tuning had used the correct frames.</li>
+<li>(c) On D0 the <code>--fast</code> all-user means equal those of the full run (which builds rankings for all 10,404 users) to the last digit: main 0.054581609…, the TF-IDF variant 0.054480550…, Latest buy 0.052632821…. The T100 run uses exactly the starter's 100 user IDs, and the SHA-256 hashes of its four data files match the starter's <code>protocol.json</code>.</li>
+<li>(d) Self-similarity is masked in the "max similarity" features, so a candidate never matches itself.</li>
+</ul>
+
+<h2>5. Discussion</h2>
+<p><b>What worked:</b> a stronger learned reranker. Training on 12 windows and tuning on validation gives a method that beats every provided baseline on four independent cut-offs and the 100-user sample, with all CIs against Latest buy above 0.</p>
+<p><b>What did not:</b> the LLM. With a matched TF-IDF control and four dev sets, the Qwen3.5 asset Encoder changes nDCG@10 by 0.0000 ± 0.0019, and the investor Encoder by −0.0005 ± 0.0021. HW2 showed the same for investor embeddings with one window; HW3 extends it to item-side text and to four windows, with enough users to rule out effects above about 0.003. In this data the signal is <i>which asset and when</i>, not <i>what the asset is</i>.</p>
+<p><b>Why the final model still contains LLM features:</b> keeping or dropping them does not change the score beyond noise. I therefore keep the model I defined before D1–D3 were evaluated, rather than pick a variant by test score.</p>
+<p><b>Threats to validity:</b></p>
+<ul>
+<li>These are development results under the teaching protocol; the official evaluation set is not yet released.</li>
+<li>D0 was seen once before tuning (§3.2).</li>
+<li>Training label windows follow calendar months, so they are 28–31 days rather than exactly 30, and one overlaps the next by two days. None crosses the test cut-off.</li>
+<li>The cut-offs were chosen for embedding availability.</li>
+<li>Asset names in the prompt could let the LLM use knowledge from after the cut-off; the null result makes this moot here.</li>
+<li>nDCG@10 measures agreement with purchases, not suitability.</li>
+</ul>
+<p><b>Next steps:</b> candidate generation for new-asset buyers (Anna's new-asset filler); an LLM <i>Ranker</i> applied only to new-asset candidates, where text is the only signal; and retrieval of evidence such as news, following the Session 3 RAG design, compared against "no extra context".</p>
+
+<h3>Team Discussion and Individual Contribution</h3>
+<table>
+<thead><tr><th style="width:22%">Field</th><th>Content <span class="tag">[T] = team decision with Anna, [I] = my own work</span></th></tr></thead>
+<tr><td>Discussed and decided</td><td>[T] We use one shared development protocol (T100 + D0–D3, locked before comparisons) and one final team pipeline for the benchmark. [T] Split: I own the warm-user reranker, re-buy features, LLM Encoder tests and integration. Anna owns a new-asset slot filler, the cold-start path and the sparse-vs-extensive subgroup analysis. [T] Interface: her scores enter my reranker as per-(user, asset) columns. [T] Individual grading means each report is complete without the other's results.</td></tr>
+<tr><td>Unresolved</td><td>[T] Whether Anna's filler is integrated depends on whether it improves D0 validation. [T] The official evaluation set and final runtime rules are still pending.</td></tr>
+<tr><td>My contribution</td><td>[I] Headroom analysis, protocol, the re-buy feature group, the asset Encoder and TF-IDF control, multi-window training, validation-only tuning, all dev runs, ablation, failure analysis and verification. Everything in <code>hw3/</code> except Anna's files.</td></tr>
+<tr><td>Shared vs. mine</td><td>Shared: data, starter and baselines (instructor); team repository; candidate and HW2 feature code in <code>src/</code>; investor embeddings (mine, from HW2).</td></tr>
+</table>
+
+<h2>6. AI Usage Disclosure</h2>
+<p style="text-align:left"><b>Tool:</b> Claude Code (Anthropic) desktop app, model Claude Opus 5.5 (<code>claude-opus-5-5</code>), 21 Nov 2026.</p>
+<p style="text-align:left"><b>Use.</b> From my decisions (the protocol, which ideas to test, the controls), the AI agent did the following:</p>
+<ul>
+<li>read the assignment and the Session 3 slides;</li>
+<li>wrote and ran all scripts in <code>hw3/</code>: <code>headroom.py</code>, <code>heuristics.py</code>, <code>embed_assets.py</code>, <code>rerank3.py</code>, <code>tune*.py</code>, <code>compare.py</code>, <code>pooled.py</code>, <code>failure.py</code>, <code>coverage.py</code> and <code>check_one_user.py</code>;</li>
+<li>found and fixed the leakage incident in §4.5(b);</li>
+<li>ran an independent AI review of this report against the assignment, then revised it (provided-comparison rows, disclosure of the preliminary D0 run, coverage, the investor-window caveat).</li>
+<li>drafted this report, which I edited.</li>
+</ul>
+<p style="text-align:left"><b>AI-performed checks:</b> §4.5 (a)–(d), the bootstrap CIs, and the unit tests.</p>
+<p style="text-align:left"><b>My own verification:</b> I re-ran the AI-written check script for the one-user nDCG in §4.5 and redid its DCG/IDCG arithmetic by hand. I also compared the protocol hash and data hashes with the starter's files myself.</p>
+<p style="text-align:left"><b>Session export:</b> the native Claude Code JSONL of this session.</p>
+
+<h2>References</h2>
+<div class="refs">
+<p>[1] J. Sanz-Cruzado, N. Droukas, and R. McCreadie, "FAR-Trans: An investment dataset for financial asset recommendation," in <i>Proc. IJCAI-2024 Workshop on Recommender Systems in Finance (Fin-RecSys)</i>, 2024. Available: https://arxiv.org/abs/2407.08692</p>
+<p>[2] H. Lyu <i>et al.</i>, "LLM-Rec: Personalized recommendation via prompting large language models," in <i>Findings of NAACL</i>, 2024. Available: https://arxiv.org/abs/2307.15780</p>
+<p>[3] Y. Hou <i>et al.</i>, "Large language models are zero-shot rankers for recommender systems," in <i>Proc. ECIR</i>, 2024. Available: https://arxiv.org/abs/2305.08845</p>
+<p>[4] T. Jiang <i>et al.</i>, "Scaling sentence embeddings with large language models," arXiv:2307.16645, 2023.</p>
+<p>[5] L. McInnes, J. Healy, and J. Melville, "UMAP: Uniform manifold approximation and projection for dimension reduction," arXiv:1802.03426, 2018.</p>
+<p>[6] P. Lewis <i>et al.</i>, "Retrieval-augmented generation for knowledge-intensive NLP tasks," in <i>Proc. NeurIPS</i>, 2020. Available: https://arxiv.org/abs/2005.11401</p>
+<p>[7] H. Steck, "Embarrassingly shallow autoencoders for sparse data," in <i>Proc. WWW</i>, 2019. Available: https://arxiv.org/abs/1905.03375</p>
+<p>[8] Y. Hu, Y. Koren, and C. Volinsky, "Collaborative filtering for implicit feedback datasets," in <i>Proc. IEEE ICDM</i>, 2008.</p>
+<p>[9] C. J. C. Burges, "From RankNet to LambdaRank to LambdaMART: An overview," Microsoft Research Technical Report MSR-TR-2010-82, 2010.</p>
+<p>[10] G. Salton and C. Buckley, "Term-weighting approaches in automatic text retrieval," <i>Information Processing &amp; Management</i>, vol. 24, no. 5, pp. 513–523, 1988.</p>
+<p>[11] Qwen Team, "Qwen3.5-0.8B," model card, Hugging Face, 2026. Available: https://huggingface.co/Qwen/Qwen3.5-0.8B</p>
+<p>[12] S. Jin, "RecSys-LLMs: FAR-Trans starter and LLM baselines," GitHub, commit f6850861, 2026. Available: https://github.com/dryjins/RecSys-LLMs/tree/main/project</p>
+</div>
+</body>
+</html>

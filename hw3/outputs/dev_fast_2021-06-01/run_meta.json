@@ -1,0 +1,325 @@
+{
+  "cutoff": "2021-06-01",
+  "windows": [
+    [
+      "2021-05-01",
+      "2021-05-31"
+    ],
+    [
+      "2021-04-01",
+      "2021-05-01"
+    ],
+    [
+      "2021-03-01",
+      "2021-03-31"
+    ],
+    [
+      "2021-02-01",
+      "2021-03-03"
+    ],
+    [
+      "2021-01-01",
+      "2021-01-31"
+    ],
+    [
+      "2020-12-01",
+      "2020-12-31"
+    ],
+    [
+      "2020-11-01",
+      "2020-12-01"
+    ],
+    [
+      "2020-10-01",
+      "2020-10-31"
+    ],
+    [
+      "2020-09-01",
+      "2020-10-01"
+    ],
+    [
+      "2020-08-01",
+      "2020-08-31"
+    ],
+    [
+      "2020-07-01",
+      "2020-07-31"
+    ],
+    [
+      "2020-06-01",
+      "2020-07-01"
+    ]
+  ],
+  "params": {
+    "objective": "lambdarank",
+    "metric": "ndcg",
+    "eval_at": [
+      10
+    ],
+    "learning_rate": 0.03,
+    "num_leaves": 31,
+    "min_data_in_leaf": 50,
+    "feature_fraction": 0.5,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 1,
+    "lambdarank_truncation_level": 20,
+    "verbose": -1,
+    "seed": 0
+  },
+  "lgb_seeds": 3,
+  "configs": {
+    "behaviour_hw2": "base",
+    "rebuy": "base+rebuy",
+    "rebuy_tfidf": "base+rebuy+asset_tfidf",
+    "rebuy_assetllm": "base+rebuy+asset_llm",
+    "full": "base+rebuy+asset_llm+inv_llm",
+    "main": "base+rebuy+asset_tfidf+asset_llm+inv_llm",
+    "rebuy_invllm": "base+rebuy+inv_llm"
+  },
+  "variants": {
+    "behaviour_hw2": {
+      "best_iteration": 349,
+      "valid_ndcg10_candidates": 0.6144962713980743,
+      "gain_share": {
+        "rebuy": 0.0,
+        "asset_llm": 0.0,
+        "asset_tfidf": 0.0,
+        "inv_llm": 0.0
+      },
+      "top_features": {
+        "mf_rank": 803318.0,
+        "uknn_rank": 278742.0,
+        "n_buy": 176658.0,
+        "val_share": 159578.0,
+        "ease_rank": 82486.0,
+        "pop30": 78877.0,
+        "dec90": 74073.0,
+        "pop90": 64245.0,
+        "days_last": 41500.0,
+        "pop_all": 33222.0,
+        "itemknn_rank": 31769.0,
+        "cbf": 28933.0
+      }
+    },
+    "rebuy": {
+      "best_iteration": 314,
+      "valid_ndcg10_candidates": 0.6188950590859218,
+      "gain_share": {
+        "rebuy": 0.3034866228941186,
+        "asset_llm": 0.0,
+        "asset_tfidf": 0.0,
+        "inv_llm": 0.0
+      },
+      "top_features": {
+        "mf_rank": 705858.0,
+        "rec_rank": 390231.0,
+        "freq_rank": 201356.0,
+        "ease_rank": 102016.0,
+        "val_share": 99945.0,
+        "pop30": 67737.0,
+        "pop90": 59428.0,
+        "dec90": 48161.0,
+        "itemknn_rank": 39954.0,
+        "n_buy": 39308.0,
+        "pop_all": 35557.0,
+        "u_rebuy_rate": 31046.0
+      }
+    },
+    "rebuy_tfidf": {
+      "best_iteration": 490,
+      "valid_ndcg10_candidates": 0.6215662084600897,
+      "gain_share": {
+        "rebuy": 0.17520971475720498,
+        "asset_llm": 0.0,
+        "asset_tfidf": 0.16854480984849118,
+        "inv_llm": 0.0
+      },
+      "top_features": {
+        "mf_rank": 796089.0,
+        "a_tfidf_prof_rank": 337465.0,
+        "rec_rank": 245233.0,
+        "val_share": 96555.0,
+        "pop30": 85860.0,
+        "ease_rank": 76448.0,
+        "freq_rank": 64930.0,
+        "pop90": 50110.0,
+        "a_tfidf_prof": 44096.0,
+        "pop180": 37904.0,
+        "u_rebuy_rate": 34322.0,
+        "pop_all": 26149.0
+      }
+    },
+    "rebuy_assetllm": {
+      "best_iteration": 340,
+      "valid_ndcg10_candidates": 0.6202562389883312,
+      "gain_share": {
+        "rebuy": 0.29407642614379675,
+        "asset_llm": 0.017029283043428083,
+        "asset_tfidf": 0.0,
+        "inv_llm": 0.0
+      },
+      "top_features": {
+        "mf_rank": 796304.0,
+        "rec_rank": 375710.0,
+        "freq_rank": 200495.0,
+        "ease_rank": 91299.0,
+        "pop30": 85965.0,
+        "val_share": 74187.0,
+        "dec90": 65485.0,
+        "pop90": 58349.0,
+        "uknn_rank": 34675.0,
+        "u_rebuy_rate": 33731.0,
+        "itemknn_rank": 33240.0,
+        "pop180": 26857.0
+      }
+    },
+    "full": {
+      "best_iteration": 311,
+      "valid_ndcg10_candidates": 0.620229032829291,
+      "gain_share": {
+        "rebuy": 0.2745322724050244,
+        "asset_llm": 0.016233446899698602,
+        "asset_tfidf": 0.0,
+        "inv_llm": 0.0038250814874006534
+      },
+      "top_features": {
+        "mf_rank": 798371.0,
+        "rec_rank": 397860.0,
+        "freq_rank": 135088.0,
+        "pop30": 79944.0,
+        "ease_rank": 79806.0,
+        "pop90": 64340.0,
+        "val_share": 64041.0,
+        "uknn_rank": 63749.0,
+        "n_buy": 46733.0,
+        "dec30": 35133.0,
+        "pop_all": 30197.0,
+        "u_rebuy_rate": 29911.0
+      }
+    },
+    "main": {
+      "best_iteration": 357,
+      "valid_ndcg10_candidates": 0.6238114626585177,
+      "gain_share": {
+        "rebuy": 0.20146068718032045,
+        "asset_llm": 0.008277448696810207,
+        "asset_tfidf": 0.17315098450292712,
+        "inv_llm": 0.0036288988626349103
+      },
+      "top_features": {
+        "mf_rank": 758791.0,
+        "a_tfidf_prof_rank": 330816.0,
+        "rec_rank": 290748.0,
+        "freq_rank": 80143.0,
+        "pop30": 79595.0,
+        "ease_rank": 79187.0,
+        "a_tfidf_prof": 54634.0,
+        "val_share": 53933.0,
+        "pop90": 49731.0,
+        "pop180": 38993.0,
+        "u_rebuy_rate": 33655.0,
+        "mf": 27003.0
+      }
+    },
+    "rebuy_invllm": {
+      "best_iteration": 346,
+      "valid_ndcg10_candidates": 0.6195738788237538,
+      "gain_share": {
+        "rebuy": 0.26657759622591326,
+        "asset_llm": 0.0,
+        "asset_tfidf": 0.0,
+        "inv_llm": 0.00379679738769611
+      },
+      "top_features": {
+        "mf_rank": 696001.0,
+        "rec_rank": 349749.0,
+        "freq_rank": 159498.0,
+        "uknn_rank": 101301.0,
+        "val_share": 100734.0,
+        "ease_rank": 93514.0,
+        "pop30": 79878.0,
+        "pop90": 70152.0,
+        "dec90": 65031.0,
+        "n_buy": 55825.0,
+        "u_rebuy_rate": 35507.0,
+        "itemknn_rank": 35442.0
+      }
+    }
+  },
+  "timings_seconds": {
+    "train_features_seconds": 0.7924725000048056,
+    "test_features_seconds": 117.8146438000258,
+    "behaviour_hw2_train_seconds": 549.9068857999519,
+    "behaviour_hw2_predict_seconds": 3.448362899944186,
+    "rebuy_train_seconds": 424.05681750003714,
+    "rebuy_predict_seconds": 2.0728159999707714,
+    "rebuy_tfidf_train_seconds": 341.51223320001736,
+    "rebuy_tfidf_predict_seconds": 2.8122450000373647,
+    "rebuy_assetllm_train_seconds": 256.59038639999926,
+    "rebuy_assetllm_predict_seconds": 2.01416669995524,
+    "full_train_seconds": 253.2859825999476,
+    "full_predict_seconds": 3.1031269000377506,
+    "main_train_seconds": 291.9494499999564,
+    "main_predict_seconds": 2.2911471999250352,
+    "rebuy_invllm_train_seconds": 259.5722498999676,
+    "rebuy_invllm_predict_seconds": 2.088268000050448,
+    "total_seconds": 2519.2925854000496
+  },
+  "fast": true,
+  "feature_version": "v1",
+  "investor_embedding_test": "2021-06-01",
+  "summary": {
+    "users": {
+      "behaviour_hw2": 10404.0,
+      "cbf": 10404.0,
+      "full": 10404.0,
+      "latest_buy": 10404.0,
+      "latest_buy_or_sell": 10404.0,
+      "main": 10404.0,
+      "popularity": 10404.0,
+      "rebuy": 10404.0,
+      "rebuy_assetllm": 10404.0,
+      "rebuy_invllm": 10404.0,
+      "rebuy_tfidf": 10404.0
+    },
+    "nonempty": {
+      "behaviour_hw2": 1178.0,
+      "cbf": 1178.0,
+      "full": 1178.0,
+      "latest_buy": 1178.0,
+      "latest_buy_or_sell": 1178.0,
+      "main": 1178.0,
+      "popularity": 1178.0,
+      "rebuy": 1178.0,
+      "rebuy_assetllm": 1178.0,
+      "rebuy_invllm": 1178.0,
+      "rebuy_tfidf": 1178.0
+    },
+    "all": {
+      "behaviour_hw2": 0.0545,
+      "cbf": 0.02862,
+      "full": 0.054492,
+      "latest_buy": 0.052633,
+      "latest_buy_or_sell": 0.050911,
+      "main": 0.054582,
+      "popularity": 0.026173,
+      "rebuy": 0.054598,
+      "rebuy_assetllm": 0.054412,
+      "rebuy_invllm": 0.054286,
+      "rebuy_tfidf": 0.054481
+    },
+    "nonempty_mean": {
+      "behaviour_hw2": 0.481342,
+      "cbf": 0.25277,
+      "full": 0.481266,
+      "latest_buy": 0.464849,
+      "latest_buy_or_sell": 0.449641,
+      "main": 0.48206,
+      "popularity": 0.231157,
+      "rebuy": 0.482206,
+      "rebuy_assetllm": 0.480565,
+      "rebuy_invllm": 0.479446,
+      "rebuy_tfidf": 0.481168
+    }
+  }
+}

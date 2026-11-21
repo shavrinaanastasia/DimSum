@@ -1,0 +1,15 @@
+features,override,best_it,valid_ndcg,sec
+all,"{""feature_fraction"": 0.5}",357,0.61909,134
+all,"{""num_leaves"": 15}",507,0.61798,126
+all,"{""lambda_l2"": 10.0}",448,0.61754,140
+all,"{""lambdarank_truncation_level"": 50}",354,0.61705,126
+all,"{""lambdarank_truncation_level"": 10}",206,0.6168,73
+all,"{""min_data_in_leaf"": 20}",252,0.61671,97
+all,"{""min_data_in_leaf"": 200}",351,0.61663,107
+full,{},539,0.61609,153
+all,"{""num_leaves"": 63}",185,0.61561,96
+all,{},590,0.61538,189
+rebuy_tfidf,{},340,0.61503,85
+all,"{""learning_rate"": 0.01}",430,0.61469,120
+all,"{""objective"": ""rank_xendcg""}",191,0.6146,40
+all,"{""num_leaves"": 127, ""min_data_in_leaf"": 100}",304,0.61227,114

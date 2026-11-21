@@ -1,0 +1,38 @@
+{
+  "protocol_hash": "93926bc2ee2e9a6026cb68b40537ed4c842ef167d6993c85e55d3dd5ca08aed2",
+  "methods": {
+    "cbf": {
+      "users": 13258,
+      "nonempty_truth_users": 966,
+      "empty_truth_users": 12292,
+      "ndcg_at_10": 0.017845030808993925,
+      "ndcg_at_10_nonempty": 0.24491658226256882
+    },
+    "latest_buy": {
+      "users": 13258,
+      "nonempty_truth_users": 966,
+      "empty_truth_users": 12292,
+      "ndcg_at_10": 0.03759371512866756,
+      "ndcg_at_10_nonempty": 0.5159601192296838
+    },
+    "latest_buy_or_sell": {
+      "users": 13258,
+      "nonempty_truth_users": 966,
+      "empty_truth_users": 12292,
+      "ndcg_at_10": 0.03669907075890365,
+      "ndcg_at_10_nonempty": 0.5036814494011849
+    },
+    "popularity": {
+      "users": 13258,
+      "nonempty_truth_users": 966,
+      "empty_truth_users": 12292,
+      "ndcg_at_10": 0.014196450538598157,
+      "ndcg_at_10_nonempty": 0.1948411400007602
+    }
+  },
+  "custom_failures": [],
+  "excluded_rows": {
+    "reconstructed_initial_position_rows": 38019
+  },
+  "note": "Offline purchase relevance, not profitability or asset suitability."
+}

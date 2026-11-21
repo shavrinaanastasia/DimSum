@@ -1,0 +1,8 @@
+﻿12 {} single [0.6154, 0.6154, 0.6144] avg3 0.61644
+12 {"feature_fraction": 0.5} single [0.6191, 0.616, 0.6179] avg3 0.6187
+12 {"feature_fraction": 0.5, "num_leaves": 15} single [0.6149, 0.6127, 0.6165] avg3 0.61628
+12 {"feature_fraction": 0.5, "num_leaves": 15, "lambda_l2": 10.0} single [0.6173, 0.6135, 0.6143] avg3 0.6169
+12 {"feature_fraction": 0.3} single [0.6201, 0.6179, 0.6179] avg3 0.61796
+24 {} single [0.616, 0.6174, 0.6148] avg3 0.61485
+24 {"feature_fraction": 0.5} single [0.6187, 0.6165, 0.6172] avg3 0.61815
+24 {"feature_fraction": 0.5, "num_leaves": 15} single [0.6177, 0.6151, 0.617] avg3 0.61737

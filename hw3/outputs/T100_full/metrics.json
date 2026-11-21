@@ -1,0 +1,79 @@
+{
+  "behaviour_hw2": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.03721869341305735,
+    "ndcg_at_10_nonempty": 0.33835175830052133
+  },
+  "cbf": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.02010001173607857,
+    "ndcg_at_10_nonempty": 0.18272737941889608
+  },
+  "full": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.03750841081365076,
+    "ndcg_at_10_nonempty": 0.34098555285137055
+  },
+  "latest_buy": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.027722649787649066,
+    "ndcg_at_10_nonempty": 0.2520240889786279
+  },
+  "latest_buy_or_sell": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.02710704869390403,
+    "ndcg_at_10_nonempty": 0.24642771539912756
+  },
+  "main": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.03795948023365973,
+    "ndcg_at_10_nonempty": 0.3450861839423612
+  },
+  "popularity": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.028590012799467636,
+    "ndcg_at_10_nonempty": 0.25990920726788763
+  },
+  "rebuy": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.03550141316034009,
+    "ndcg_at_10_nonempty": 0.32274011963945537
+  },
+  "rebuy_assetllm": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.038398548162648996,
+    "ndcg_at_10_nonempty": 0.34907771056953635
+  },
+  "rebuy_invllm": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.03767586887019916,
+    "ndcg_at_10_nonempty": 0.34250789881999233
+  },
+  "rebuy_tfidf": {
+    "users": 100,
+    "nonempty_truth_users": 11,
+    "empty_truth_users": 89,
+    "ndcg_at_10": 0.03808243301600603,
+    "ndcg_at_10_nonempty": 0.3462039365091457
+  }
+}

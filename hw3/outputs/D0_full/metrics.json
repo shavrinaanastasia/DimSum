@@ -1,0 +1,44 @@
+{
+  "cbf": {
+    "users": 10404,
+    "nonempty_truth_users": 1178,
+    "empty_truth_users": 9226,
+    "ndcg_at_10": 0.028620028779862437,
+    "ndcg_at_10_nonempty": 0.25276976182146754
+  },
+  "latest_buy": {
+    "users": 10404,
+    "nonempty_truth_users": 1178,
+    "empty_truth_users": 9226,
+    "ndcg_at_10": 0.05263282198045581,
+    "ndcg_at_10_nonempty": 0.464848794469153
+  },
+  "latest_buy_or_sell": {
+    "users": 10404,
+    "nonempty_truth_users": 1178,
+    "empty_truth_users": 9226,
+    "ndcg_at_10": 0.05091088560550386,
+    "ndcg_at_10_nonempty": 0.4496407927331597
+  },
+  "main": {
+    "users": 10404,
+    "nonempty_truth_users": 1178,
+    "empty_truth_users": 9226,
+    "ndcg_at_10": 0.05458160951740982,
+    "ndcg_at_10_nonempty": 0.48206032718092684
+  },
+  "popularity": {
+    "users": 10404,
+    "nonempty_truth_users": 1178,
+    "empty_truth_users": 9226,
+    "ndcg_at_10": 0.02617288807593327,
+    "ndcg_at_10_nonempty": 0.23115681455179093
+  },
+  "rebuy_tfidf": {
+    "users": 10404,
+    "nonempty_truth_users": 1178,
+    "empty_truth_users": 9226,
+    "ndcg_at_10": 0.05448055080197153,
+    "ndcg_at_10_nonempty": 0.4811677848418607
+  }
+}

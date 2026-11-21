@@ -1,0 +1,3 @@
+﻿base+rebuy+asset_tfidf+asset_llm+inv_llm 507 0.61798
+base+rebuy+asset_tfidf+asset_llm+inv_llm+extra 394 0.61529
+base+rebuy+extra 392 0.61459
